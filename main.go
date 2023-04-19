@@ -29,10 +29,16 @@ var (
 	UserController      controllers.UserController
 	UserRouteController routes.UserRouteController
 
-	authCollection      *mongo.Collection
+	authCollection *mongo.Collection
+	postCollection *mongo.Collection
+
 	authService         services.AuthService
 	AuthController      controllers.AuthController
 	AuthRouteController routes.AuthRouteController
+
+	postService         services.PostService
+	PostController      controllers.PostController
+	PostRouteController routes.PostRouteController
 )
 
 func init() {
@@ -74,13 +80,20 @@ func init() {
 
 	// Collections
 	authCollection = mongoclient.Database("golang_mongodb").Collection("users")
+	postCollection = mongoclient.Database("golang_mongodb").Collection("posts")
+
 	userService = services.NewUserServiceImpl(authCollection, ctx)
 	authService = services.NewAuthService(authCollection, ctx)
+	postService = services.NewPostService(postCollection, ctx)
+
 	AuthController = controllers.NewAuthController(authService, userService)
 	AuthRouteController = routes.NewAuthRouteController(AuthController)
 
 	UserController = controllers.NewUserController(userService)
 	UserRouteController = routes.NewRouteUserController(UserController)
+
+	PostController = controllers.NewPostController(postService)
+	PostRouteController = routes.NewPostRouteController(PostController)
 
 	//  Create the Gin Engine instance
 	server = gin.Default()
@@ -118,6 +131,7 @@ func main() {
 
 	AuthRouteController.AuthRoute(router, userService)
 	UserRouteController.UserRoute(router, userService)
+	PostRouteController.PostRoute(router, postService)
 
 	log.Fatal(server.Run(":" + config.Port))
 }
